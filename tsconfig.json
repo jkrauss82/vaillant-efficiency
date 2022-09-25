@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    // Tells TypeScript to read JS files, as normally they are ignored as source files
+    "allowJs": true,
+
+    // Generate d.ts files
+    "declaration": true,
+
+    // Go to js file when using IDE functions like "Go to Definition" in VSCode
+    "declarationMap": true,
+
+    // Types should go into this directory.
+    // Removing this would place the .d.ts files next to the .js files
+    "outDir": "dist",
+
+    "target": "ES2021",
+    "noImplicitAny": true,
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "*": [
+        "node_modules/*",
+        "src/types/*"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": ["node_modules", "**/*.spec.ts"]
+}

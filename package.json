@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "dotenv": "^16.0.2",
+    "ts-node": "^10.7.0"
+  },
+  "scripts": {
+    "start": "npx ts-node src/controller.ts"
+  }
+}
