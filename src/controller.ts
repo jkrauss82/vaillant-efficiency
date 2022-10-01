@@ -50,12 +50,13 @@ async function control(): Promise<void> {
         Date.now() - newState.cycleStartedAt < parseInt(process.env.CYCLE_LENGTH) &&
         newState.desiredTemperature - newState.currentTemperature <= parseFloat(process.env.THRESHOLD)
     ) {
-        const command = `${ebusdSetTempCmd} ${(newState.desiredTemperature +1)}`
-        console.log(new Date().toISOString+`: Increasing minimum temperature to ${(newState.desiredTemperature +1)} °C.\n\tCommand: ${command}`)
+        const newTemp = Math.floor(newState.desiredTemperature +1)
+        const command = `${ebusdSetTempCmd} ${newTemp}`
+        console.log(new Date().toISOString+`: Increasing minimum temperature to ${newTemp} °C.\n\tCommand: ${command}`)
         const ret = execSync(command)
         console.log(new Date().toISOString+`: ebusctl output: ${(ret+'').trim()}`)
         newState.isAdjusted = true
-        newState.currentMinTemperatureSet = newState.desiredTemperature +1
+        newState.currentMinTemperatureSet = newTemp
     }
     // reset minimum temperature if cycle length has reached target length
     else if (
