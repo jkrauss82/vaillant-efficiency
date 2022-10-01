@@ -5,8 +5,8 @@ import { execSync } from 'child_process'
 
 let currentState: State = null
 
-const ebusdSetTempCmd = `ebusctl write -s ${process.env.QQ} -c ${process.env.CIRCUIT} ${process.env.ITEM}`
-const ebusdReadMinTemp = `ebusctl read -s ${process.env.QQ} -c ${process.env.CIRCUIT} ${process.env.ITEM}`
+let ebusdSetTempCmd: string = null
+let ebusdReadMinTemp: string = null
 
 async function fetchStatus(): Promise<State> {
     console.log('Requesting state from '+`http://${process.env.EBUSD_HOST}:${process.env.EBUSD_PORT}/data`)
@@ -75,6 +75,9 @@ async function control(): Promise<void> {
 
 async function init() {
     await dotenv.config({ path: __dirname + "/../.env"})
+
+    ebusdSetTempCmd = `ebusctl write -s ${process.env.QQ} -c ${process.env.CIRCUIT} ${process.env.ITEM}`
+    ebusdReadMinTemp = `ebusctl read -s ${process.env.QQ} -c ${process.env.CIRCUIT} ${process.env.ITEM}`
 
     // get initial value of current minimum temperature
     const ret = execSync(ebusdReadMinTemp)
