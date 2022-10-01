@@ -52,9 +52,9 @@ async function control(): Promise<void> {
     ) {
         const newTemp = Math.floor(newState.desiredTemperature +1)
         const command = `${ebusdSetTempCmd} ${newTemp}`
-        console.log(new Date().toISOString+`: Increasing minimum temperature to ${newTemp} °C.\n\tCommand: ${command}`)
+        console.log(new Date().toISOString()+`: Increasing minimum temperature to ${newTemp} °C.\n\tCommand: ${command}`)
         const ret = execSync(command)
-        console.log(new Date().toISOString+`: ebusctl output: ${(ret+'').trim()}`)
+        console.log(new Date().toISOString()+`: ebusctl output: ${(ret+'').trim()}`)
         newState.isAdjusted = true
         newState.currentMinTemperatureSet = newTemp
     }
@@ -66,14 +66,16 @@ async function control(): Promise<void> {
         newState.isAdjusted == true
     ) {
         const command = `${ebusdSetTempCmd} ${process.env.MINIMUM_TEMP}`
-        console.log(new Date().toISOString+`: Reset of minimum temperature at target cycle length reached.\n\tCommand: ${command}`)
+        console.log(new Date().toISOString()+`: Reset of minimum temperature at target cycle length reached.\n\tCommand: ${command}`)
         const ret = execSync(command)
-        console.log(new Date().toISOString+`: ebusctl output: ${(ret+'').trim()}`)
+        console.log(new Date().toISOString()+`: ebusctl output: ${(ret+'').trim()}`)
         newState.isAdjusted = false
         newState.currentMinTemperatureSet = parseFloat(process.env.MINIMUM_TEMP)
     }
 
     currentState = newState
+
+    setTimeout(control, 10000)
 }
 
 async function init() {
@@ -86,18 +88,21 @@ async function init() {
     const ret = execSync(ebusdReadMinTemp)
     console.log(`Init of vaillant-efficiency: Read current setting of minimum temperature from ebus: ${(ret+'').trim()}`)
 
+    // sleep two seconds to have ebusd update with the minimum temperature value
+    await new Promise(r => setTimeout(r, 2000))
+
     currentState = await fetchStatus(true)
 
-    setInterval(control, 10000)
+    control()
 }
 
 async function shutdown() {
     if (currentState.isAdjusted == true) {
         try {
             const command = `${ebusdSetTempCmd} ${process.env.MINIMUM_TEMP}`
-            console.log(new Date().toISOString+`: Reset of minimum temperature on shutdown.\n\tCommand: ${command}`)
+            console.log(new Date().toISOString()+`: Reset of minimum temperature on shutdown.\n\tCommand: ${command}`)
             const ret = execSync(command)
-            console.log(new Date().toISOString+`: ebusctl output: ${(ret+'').trim()}`)
+            console.log(new Date().toISOString()+`: ebusctl output: ${(ret+'').trim()}`)
             process.exit(0)
         } catch (err) {
             console.error(err)
