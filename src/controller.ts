@@ -3,7 +3,10 @@ import { getValueFromJsonByPath } from './helper'
 import dotenv from 'dotenv'
 import { execSync } from 'child_process'
 
+// variables are set in init()
 let currentState: State = null
+let cycleLength: number = null
+let threshold: number = null
 
 let ebusdSetTempCmd: string = null
 let ebusdReadMinTemp: string = null
@@ -39,7 +42,7 @@ async function control(): Promise<void> {
     // check if heating has started and mark time
     if (newState.isHeating == true && (currentState.isHeating == false || currentState.cycleStartedAt == null)) {
         newState.cycleStartedAt = Date.now()
-    } else if (newState.isHeating) {
+    } else if (!newState.isHeating) {
         newState.cycleStartedAt = null
     }
 
@@ -47,8 +50,8 @@ async function control(): Promise<void> {
     if (
         newState.isHeating &&
         newState.desiredTemperature > 0 && // sanity check: when running warm water, this value is set to zero by the Vaillant controller
-        Date.now() - newState.cycleStartedAt < parseInt(process.env.CYCLE_LENGTH) &&
-        newState.desiredTemperature - newState.currentTemperature <= parseFloat(process.env.THRESHOLD)
+        Date.now() - newState.cycleStartedAt < cycleLength &&
+        newState.desiredTemperature - newState.currentTemperature <= threshold
     ) {
         const newTemp = Math.floor(newState.desiredTemperature +1)
         const command = `${ebusdSetTempCmd} ${newTemp}`
@@ -60,9 +63,8 @@ async function control(): Promise<void> {
     }
     // reset minimum temperature if cycle length has reached target length
     else if (
-        newState.isHeating &&
         newState.desiredTemperature > 0 && // sanity check: when running warm water, this value is set to zero by the Vaillant controller
-        Date.now() - newState.cycleStartedAt >= parseInt(process.env.CYCLE_LENGTH) &&
+        Date.now() - newState.cycleStartedAt >= cycleLength &&
         newState.isAdjusted == true
     ) {
         const command = `${ebusdSetTempCmd} ${process.env.MINIMUM_TEMP}`
@@ -83,6 +85,9 @@ async function init() {
 
     ebusdSetTempCmd = `ebusctl write -s ${process.env.QQ} -c ${process.env.CIRCUIT} ${process.env.ITEM}`
     ebusdReadMinTemp = `ebusctl read -s ${process.env.QQ} -c ${process.env.CIRCUIT} ${process.env.ITEM}`
+
+    cycleLength = parseInt(process.env.CYCLE_LENGTH)
+    threshold = parseFloat(process.env.THRESHOLD)
 
     // get initial value of current minimum temperature
     const ret = execSync(ebusdReadMinTemp)
@@ -110,6 +115,7 @@ async function shutdown() {
         }
     }
     else {
+        console.log('Exit without re-adjusting min temp.')
         process.exit(0)
     }
 }
