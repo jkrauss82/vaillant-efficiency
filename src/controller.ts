@@ -24,8 +24,13 @@ async function fetchStatus(onInit: boolean): Promise<State> {
             isAdjusted: getValueFromJsonByPath(json, process.env.PATH_MINIMUM_TEMP) > process.env.MINIMUM_TEMP
         }
 
-        console.log(new Date().toISOString()+`: --- Current State ---`)
-        console.log(state)
+        console.log(`${new Date().toISOString()}: --- Current State ---`)
+        console.log(`   currentTemperature: ${state.currentTemperature}`)
+        console.log(`   currentMinTemperatureSet: ${state.currentMinTemperatureSet}`)
+        console.log(`   desiredTemperature: ${state.desiredTemperature}`)
+        console.log(`   isHeating: ${state.isHeating}`)
+        if (state.isHeating && state.cycleStartedAt) console.log(`  cycleStartedAt: ${new Date(state.cycleStartedAt).toISOString()}`)
+        console.log(`   isAdjusted: ${state.isAdjusted}`)
         console.log('')
 
         return state
