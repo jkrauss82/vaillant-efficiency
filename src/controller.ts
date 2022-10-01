@@ -8,14 +8,14 @@ let currentState: State = null
 let ebusdSetTempCmd: string = null
 let ebusdReadMinTemp: string = null
 
-async function fetchStatus(): Promise<State> {
+async function fetchStatus(onInit: boolean): Promise<State> {
     console.log('Requesting state from '+`http://${process.env.EBUSD_HOST}:${process.env.EBUSD_PORT}/data`)
     let res = await fetch(`http://${process.env.EBUSD_HOST}:${process.env.EBUSD_PORT}/data`)
     try {
         const json = await res.json()
         const state: State = {
             currentTemperature: getValueFromJsonByPath(json, process.env.PATH_TRACKED_TEMP),
-            currentMinTemperatureSet: getValueFromJsonByPath(json, process.env.PATH_MINIMUM_TEMP),
+            currentMinTemperatureSet: onInit ? getValueFromJsonByPath(json, process.env.PATH_MINIMUM_TEMP) : currentState.currentMinTemperatureSet,
             desiredTemperature: getValueFromJsonByPath(json, process.env.PATH_DESIRED_TEMP),
             isHeating: getValueFromJsonByPath(json, process.env.PATH_ACTIVE) > 0,
             isAdjusted: getValueFromJsonByPath(json, process.env.PATH_MINIMUM_TEMP) > process.env.MINIMUM_TEMP
@@ -34,7 +34,7 @@ async function fetchStatus(): Promise<State> {
 }
 
 async function control(): Promise<void> {
-    const newState = await fetchStatus()
+    const newState = await fetchStatus(false)
 
     // check if heating has started and mark time
     if (newState.isHeating == true && (currentState.isHeating == false || currentState.cycleStartedAt == null)) {
@@ -55,6 +55,7 @@ async function control(): Promise<void> {
         const ret = execSync(command)
         console.log(new Date().toISOString+`: ebusctl output: ${(ret+'').trim()}`)
         newState.isAdjusted = true
+        newState.currentMinTemperatureSet = newState.desiredTemperature +1
     }
     // reset minimum temperature if cycle length has reached target length
     else if (
@@ -68,6 +69,7 @@ async function control(): Promise<void> {
         const ret = execSync(command)
         console.log(new Date().toISOString+`: ebusctl output: ${(ret+'').trim()}`)
         newState.isAdjusted = false
+        newState.currentMinTemperatureSet = parseFloat(process.env.MINIMUM_TEMP)
     }
 
     currentState = newState
@@ -83,7 +85,7 @@ async function init() {
     const ret = execSync(ebusdReadMinTemp)
     console.log(`Init of vaillant-efficiency: Read current setting of minimum temperature from ebus: ${(ret+'').trim()}`)
 
-    currentState = await fetchStatus()
+    currentState = await fetchStatus(true)
 
     setInterval(control, 10000)
 }
