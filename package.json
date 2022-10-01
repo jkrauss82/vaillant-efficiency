@@ -1,9 +1,18 @@
 {
+  "name": "Vaillant Efficiency",
+  "description": "Optimizes runtime of Vaillant heat pumps. Not officially supported or endorsed by Vaillant, use at your own risk!",
+  "version": "0.0.1",
+  "main": "controller.js",
   "dependencies": {
     "dotenv": "^16.0.2",
-    "ts-node": "^10.7.0"
+    "ts-node": "^10.7.0",
+    "tsc": "^2.0.4"
   },
   "scripts": {
+    "build": "./node_modules/typescript/bin/tsc --incremental",
     "start": "npx ts-node src/controller.ts"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

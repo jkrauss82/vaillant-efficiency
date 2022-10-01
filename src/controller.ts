@@ -5,6 +5,8 @@ import { execSync } from 'child_process'
 
 let currentState: State = null
 
+const ebusdSetTempCmd = `ebusctl write -s ${process.env.QQ} -c ${process.env.CIRCUIT} ${process.env.ITEM}`
+
 async function fetchStatus(): Promise<State> {
     console.log('Requesting state from '+`http://${process.env.EBUSD_HOST}:${process.env.EBUSD_PORT}/data`)
     let res = await fetch(`http://${process.env.EBUSD_HOST}:${process.env.EBUSD_PORT}/data`)
@@ -12,6 +14,7 @@ async function fetchStatus(): Promise<State> {
         const json = await res.json()
         const state: State = {
             currentTemperature: getValueFromJsonByPath(json, process.env.PATH_TRACKED_TEMP),
+            currentMinTemperatureSet: getValueFromJsonByPath(json, process.env.PATH_MINIMUM_TEMP),
             desiredTemperature: getValueFromJsonByPath(json, process.env.PATH_DESIRED_TEMP),
             isHeating: getValueFromJsonByPath(json, process.env.PATH_ACTIVE) > 0,
             isAdjusted: getValueFromJsonByPath(json, process.env.PATH_MINIMUM_TEMP) > process.env.MINIMUM_TEMP
@@ -42,10 +45,11 @@ async function control(): Promise<void> {
     // increase minimum temperature if heating, not reached target cycle length and threshold reached
     if (
         newState.isHeating &&
+        newState.desiredTemperature > 0 && // sanity check: when running warm water, this value is set to zero by the Vaillant controller
         Date.now() - newState.cycleStartedAt < parseInt(process.env.CYCLE_LENGTH) &&
         newState.desiredTemperature - newState.currentTemperature <= parseFloat(process.env.THRESHOLD)
     ) {
-        const command = `ebusctl write -c ${process.env.CIRCUIT} ${process.env.ITEM} ${(newState.desiredTemperature +1)}`
+        const command = `${ebusdSetTempCmd} ${(newState.desiredTemperature +1)}`
         console.log(new Date().toISOString+`: Increasing minimum temperature to ${(newState.desiredTemperature +1)} °C.\n\tCommand: ${command}`)
         const ret = execSync(command)
         console.log(new Date().toISOString+`: ebusctl output: ${(ret+'').trim()}`)
@@ -54,10 +58,11 @@ async function control(): Promise<void> {
     // reset minimum temperature if cycle length has reached target length
     else if (
         newState.isHeating &&
+        newState.desiredTemperature > 0 && // sanity check: when running warm water, this value is set to zero by the Vaillant controller
         Date.now() - newState.cycleStartedAt >= parseInt(process.env.CYCLE_LENGTH) &&
         newState.isAdjusted == true
     ) {
-        const command = `ebusctl write -c ${process.env.CIRCUIT} ${process.env.ITEM} ${process.env.MINIMUM_TEMP}`
+        const command = `${ebusdSetTempCmd} ${process.env.MINIMUM_TEMP}`
         console.log(new Date().toISOString+`: Reset of minimum temperature at target cycle length reached.\n\tCommand: ${command}`)
         const ret = execSync(command)
         console.log(new Date().toISOString+`: ebusctl output: ${(ret+'').trim()}`)
@@ -72,13 +77,13 @@ async function init() {
 
     currentState = await fetchStatus()
 
-    setInterval(control, 30000)
+    setInterval(control, 10000)
 }
 
 async function shutdown() {
     if (currentState.isAdjusted == true) {
         try {
-            const command = `ebusctl write -c ${process.env.CIRCUIT} ${process.env.ITEM} ${process.env.MINIMUM_TEMP}`
+            const command = `${ebusdSetTempCmd} ${process.env.MINIMUM_TEMP}`
             console.log(new Date().toISOString+`: Reset of minimum temperature on shutdown.\n\tCommand: ${command}`)
             const ret = execSync(command)
             console.log(new Date().toISOString+`: ebusctl output: ${(ret+'').trim()}`)
