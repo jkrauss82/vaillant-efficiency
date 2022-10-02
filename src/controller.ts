@@ -87,9 +87,12 @@ async function control(): Promise<void> {
 
 async function ebusTcp(command: string): Promise<string> {
     let ret = execSync(ebusdReadMinTemp)
-    while ((ret+'').trim() == '') {
-        await new Promise(r => setTimeout(r, 500))
-        ret = execSync(ebusdReadMinTemp)
+    // make sure we have the correct response when reading, otherwise we "fire and forget"
+    if (command.indexOf('ebusctl read') != -1) {
+        while ((ret+'').trim() == '') {
+            await new Promise(r => setTimeout(r, 2000))
+            ret = execSync(ebusdReadMinTemp)
+        }
     }
     return (ret+'')
 }
