@@ -21,7 +21,8 @@ async function fetchStatus(onInit: boolean): Promise<State> {
             currentMinTemperatureSet: onInit ? getValueFromJsonByPath(json, process.env.PATH_MINIMUM_TEMP) : currentState.currentMinTemperatureSet,
             desiredTemperature: getValueFromJsonByPath(json, process.env.PATH_DESIRED_TEMP),
             isHeating: getValueFromJsonByPath(json, process.env.PATH_ACTIVE) > 0,
-            isAdjusted: getValueFromJsonByPath(json, process.env.PATH_MINIMUM_TEMP) > process.env.MINIMUM_TEMP
+            isAdjusted: getValueFromJsonByPath(json, process.env.PATH_MINIMUM_TEMP) > process.env.MINIMUM_TEMP,
+            cycleStartedAt: currentState.cycleStartedAt || null
         }
 
         console.log(`${new Date().toISOString()}: --- Current State ---`)
@@ -47,7 +48,7 @@ async function control(): Promise<void> {
     // check if heating has started and mark time
     if (newState.isHeating == true && (currentState.isHeating == false || !currentState.cycleStartedAt)) {
         newState.cycleStartedAt = Date.now()
-        console.log(new Date().toISOString()+` Setting cycleStart to ${new Date(newState.cycleStartedAt).toISOString()}`)
+        console.log(new Date().toISOString()+` Setting cycleStart to ${new Date(newState.cycleStartedAt).toISOString()}\n`)
     } else if (!newState.isHeating) {
         newState.cycleStartedAt = null
     }
@@ -66,6 +67,8 @@ async function control(): Promise<void> {
         console.log(new Date().toISOString()+`: ebusctl output: ${(ret+'').trim()}`)
         newState.isAdjusted = true
         newState.currentMinTemperatureSet = newTemp
+        // need to sleep to have ebusd check on the desired temp
+        await new Promise(r => setTimeout(r, 60000))
     }
     // reset minimum temperature if cycle length has reached target length
     else if (
