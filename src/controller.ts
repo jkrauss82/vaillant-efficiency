@@ -61,7 +61,7 @@ async function control(): Promise<void> {
         const newTemp = Math.floor(newState.desiredTemperature +1)
         const command = `${ebusdSetTempCmd} ${newTemp}`
         console.log(new Date().toISOString()+`: Increasing minimum temperature to ${newTemp} °C.\n\tCommand: ${command}`)
-        const ret = execSync(command)
+        const ret = await ebusTcp(command)
         console.log(new Date().toISOString()+`: ebusctl output: ${(ret+'').trim()}`)
         newState.isAdjusted = true
         newState.currentMinTemperatureSet = newTemp
@@ -74,7 +74,7 @@ async function control(): Promise<void> {
     ) {
         const command = `${ebusdSetTempCmd} ${process.env.MINIMUM_TEMP}`
         console.log(new Date().toISOString()+`: Reset of minimum temperature at target cycle length reached.\n\tCommand: ${command}`)
-        const ret = execSync(command)
+        const ret = await ebusTcp(command)
         console.log(new Date().toISOString()+`: ebusctl output: ${(ret+'').trim()}`)
         newState.isAdjusted = false
         newState.currentMinTemperatureSet = parseFloat(process.env.MINIMUM_TEMP)
@@ -85,17 +85,26 @@ async function control(): Promise<void> {
     setTimeout(control, 10000)
 }
 
+async function ebusTcp(command: string): Promise<string> {
+    let ret = execSync(ebusdReadMinTemp)
+    while ((ret+'').trim() == '') {
+        await new Promise(r => setTimeout(r, 500))
+        ret = execSync(ebusdReadMinTemp)
+    }
+    return (ret+'')
+}
+
 async function init() {
     await dotenv.config({ path: __dirname + "/../.env"})
 
     ebusdSetTempCmd = `ebusctl write -s ${process.env.QQ} -c ${process.env.CIRCUIT} ${process.env.ITEM}`
-    ebusdReadMinTemp = `ebusctl read -s ${process.env.QQ} -c ${process.env.CIRCUIT} ${process.env.ITEM}`
+    ebusdReadMinTemp = `ebusctl read -s ${process.env.QQ} -c ${process.env.CIRCUIT} -f ${process.env.ITEM}`
 
     cycleLength = parseInt(process.env.CYCLE_LENGTH)
     threshold = parseFloat(process.env.THRESHOLD)
 
     // get initial value of current minimum temperature
-    const ret = execSync(ebusdReadMinTemp)
+    const ret = await ebusTcp(ebusdReadMinTemp)
     console.log(`Init of vaillant-efficiency: Read current setting of minimum temperature from ebus: ${(ret+'').trim()}`)
 
     // sleep two seconds to have ebusd update with the minimum temperature value
@@ -111,7 +120,7 @@ async function shutdown() {
         try {
             const command = `${ebusdSetTempCmd} ${process.env.MINIMUM_TEMP}`
             console.log(new Date().toISOString()+`: Reset of minimum temperature on shutdown.\n\tCommand: ${command}`)
-            const ret = execSync(command)
+            const ret = await ebusTcp(command)
             console.log(new Date().toISOString()+`: ebusctl output: ${(ret+'').trim()}`)
             process.exit(0)
         } catch (err) {
