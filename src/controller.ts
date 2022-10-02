@@ -21,7 +21,7 @@ async function fetchStatus(onInit: boolean): Promise<State> {
             currentMinTemperatureSet: onInit ? getValueFromJsonByPath(json, process.env.PATH_MINIMUM_TEMP) : currentState.currentMinTemperatureSet,
             desiredTemperature: getValueFromJsonByPath(json, process.env.PATH_DESIRED_TEMP),
             isHeating: getValueFromJsonByPath(json, process.env.PATH_ACTIVE) > 0,
-            isAdjusted: getValueFromJsonByPath(json, process.env.PATH_MINIMUM_TEMP) > process.env.MINIMUM_TEMP,
+            isAdjusted: (onInit ? getValueFromJsonByPath(json, process.env.PATH_MINIMUM_TEMP) : currentState.currentMinTemperatureSet) > process.env.MINIMUM_TEMP,
             cycleStartedAt: onInit ? null : currentState?.cycleStartedAt || null
         }
 
@@ -30,7 +30,7 @@ async function fetchStatus(onInit: boolean): Promise<State> {
         console.log(`   currentMinTemperatureSet: ${state.currentMinTemperatureSet}`)
         console.log(`   desiredTemperature: ${state.desiredTemperature}`)
         console.log(`   isHeating: ${state.isHeating}`)
-        if (state.isHeating && state.cycleStartedAt != null) console.log(`  cycleStartedAt: ${new Date(state.cycleStartedAt).toISOString()}`)
+        if (state.isHeating && state.cycleStartedAt != null) console.log(`   cycleStartedAt: ${new Date(state.cycleStartedAt).toISOString()}`)
         console.log(`   isAdjusted: ${state.isAdjusted}`)
         console.log('')
 
