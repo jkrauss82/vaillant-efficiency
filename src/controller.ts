@@ -22,7 +22,7 @@ async function fetchStatus(onInit: boolean): Promise<State> {
             desiredTemperature: getValueFromJsonByPath(json, process.env.PATH_DESIRED_TEMP),
             isHeating: getValueFromJsonByPath(json, process.env.PATH_ACTIVE) > 0,
             isAdjusted: getValueFromJsonByPath(json, process.env.PATH_MINIMUM_TEMP) > process.env.MINIMUM_TEMP,
-            cycleStartedAt: currentState.cycleStartedAt || null
+            cycleStartedAt: onInit ? null : currentState?.cycleStartedAt || null
         }
 
         console.log(`${new Date().toISOString()}: --- Current State ---`)
