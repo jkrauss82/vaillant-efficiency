@@ -29,7 +29,7 @@ async function fetchStatus(onInit: boolean): Promise<State> {
         console.log(`   currentMinTemperatureSet: ${state.currentMinTemperatureSet}`)
         console.log(`   desiredTemperature: ${state.desiredTemperature}`)
         console.log(`   isHeating: ${state.isHeating}`)
-        if (state.isHeating && state.cycleStartedAt) console.log(`  cycleStartedAt: ${new Date(state.cycleStartedAt).toISOString()}`)
+        if (state.isHeating && state.cycleStartedAt != null) console.log(`  cycleStartedAt: ${new Date(state.cycleStartedAt).toISOString()}`)
         console.log(`   isAdjusted: ${state.isAdjusted}`)
         console.log('')
 
@@ -45,8 +45,9 @@ async function control(): Promise<void> {
     const newState = await fetchStatus(false)
 
     // check if heating has started and mark time
-    if (newState.isHeating == true && (currentState.isHeating == false || currentState.cycleStartedAt == null)) {
+    if (newState.isHeating == true && (currentState.isHeating == false || !currentState.cycleStartedAt)) {
         newState.cycleStartedAt = Date.now()
+        console.log(new Date().toISOString()+` Setting cycleStart to ${new Date(newState.cycleStartedAt).toISOString()}`)
     } else if (!newState.isHeating) {
         newState.cycleStartedAt = null
     }
