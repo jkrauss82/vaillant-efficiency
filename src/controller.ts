@@ -107,7 +107,7 @@ async function init() {
     ebusdSetTempCmd = `ebusctl write -s ${process.env.QQ} -c ${process.env.CIRCUIT} ${process.env.ITEM}`
     ebusdReadMinTemp = `ebusctl read -s ${process.env.QQ} -c ${process.env.CIRCUIT} -f ${process.env.ITEM}`
 
-    cycleLength = parseInt(process.env.CYCLE_LENGTH)
+    cycleLength = parseInt(process.env.CYCLE_LENGTH) * 1000
     threshold = parseFloat(process.env.THRESHOLD)
 
     // get initial value of current minimum temperature
