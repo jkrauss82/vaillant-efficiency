@@ -67,8 +67,6 @@ async function control(): Promise<void> {
         console.log(new Date().toISOString()+`: ebusctl output: ${(ret+'').trim()}`)
         newState.isAdjusted = true
         newState.currentMinTemperatureSet = newTemp
-        // need to sleep to have ebusd check on the desired temp
-        await new Promise(r => setTimeout(r, 60000))
     }
     // reset minimum temperature if cycle length has reached target length
     else if (
