@@ -102,7 +102,7 @@ async function ebusTcp(command: string): Promise<string> {
 async function init() {
     await dotenv.config({ path: __dirname + "/../.env"})
 
-    ebusdSetTempCmd = `ebusctl write -s ${process.env.QQ} -c ${process.env.CIRCUIT} ${process.env.ITEM}`
+    ebusdSetTempCmd = `ebusctl write -s ${process.env.QQ} -d ${process.env.ZZ} -c ${process.env.CIRCUIT} ${process.env.ITEM}`
     ebusdReadMinTemp = `ebusctl read -s ${process.env.QQ} -c ${process.env.CIRCUIT} -f ${process.env.ITEM}`
 
     cycleLength = parseInt(process.env.CYCLE_LENGTH) * 1000
