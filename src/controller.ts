@@ -20,7 +20,7 @@ async function fetchStatus(onInit: boolean): Promise<State> {
             currentTemperature: getValueFromJsonByPath(json, process.env.PATH_TRACKED_TEMP),
             currentMinTemperatureSet: onInit ? getValueFromJsonByPath(json, process.env.PATH_MINIMUM_TEMP) : currentState.currentMinTemperatureSet,
             desiredTemperature: getValueFromJsonByPath(json, process.env.PATH_DESIRED_TEMP),
-            isHeating: (getValueFromJsonByPath(json, process.env.PATH_ACTIVE)+'').match(/;heating$/) != null,
+            isHeating: getValueFromJsonByPath(json, process.env.PATH_ACTIVE) == 'heating',
             isAdjusted: (onInit ? getValueFromJsonByPath(json, process.env.PATH_MINIMUM_TEMP) : currentState.currentMinTemperatureSet) > process.env.MINIMUM_TEMP,
             cycleStartedAt: onInit ? null : currentState?.cycleStartedAt || null
         }
