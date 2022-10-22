@@ -4,6 +4,8 @@ Helps to optimize duration of the cycle length of Vaillant heating units through
 
 **! Important: this software is early alpha work-in-progress and not ready for production - USE AT YOUR OWN RISK !**
 
+**This project is a private endeavour and not an official Vaillant project. It is not associated with Vaillant in any way.**
+
 ## Overview
 
 I am developing this tool to fix some shortcomings of the Vaillant controller.
